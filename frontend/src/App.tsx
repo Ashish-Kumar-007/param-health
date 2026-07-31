@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getRoster, generateRoster, updateAssignment } from './api/api';
 import { eachDayOfInterval, endOfMonth, startOfMonth, startOfWeek, endOfWeek, format, isSameDay, parseISO, isSameMonth } from 'date-fns';
-import { RefreshCw, Stethoscope, Save, AlertCircle, Sparkles, Activity, Users, CalendarDays, UserPlus } from 'lucide-react';
+import { RefreshCw, Stethoscope, Save, AlertCircle, Wand2, Activity, Users, CalendarDays, UserPlus } from 'lucide-react';
 
 import { Button } from "@/components/ui/button"
 import {
@@ -45,18 +45,23 @@ function App() {
     loadData();
   }, [year, month]);
 
-  const handleGenerate = async () => {
-    if (confirm('Are you sure? This will overwrite all non-manual assignments.')) {
-      setGenerating(true);
-      try {
-        await generateRoster(year, month);
-        await loadData();
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setGenerating(false);
-      }
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  const confirmGenerate = async () => {
+    setShowConfirmDialog(false);
+    setGenerating(true);
+    try {
+      await generateRoster(year, month);
+      await loadData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setGenerating(false);
     }
+  };
+
+  const handleGenerateClick = () => {
+    setShowConfirmDialog(true);
   };
 
   const handleSaveOverride = async () => {
@@ -148,17 +153,29 @@ function App() {
           </div>
           
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-            <Button 
-              onClick={handleGenerate}
+              <Button 
+              onClick={handleGenerateClick}
               disabled={generating}
-              className="w-full sm:w-auto group flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-full font-semibold shadow-lg shadow-blue-500/25 transition-all hover:scale-105"
+              className="w-full sm:w-auto group flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-full font-semibold shadow-lg shadow-blue-500/25 transition-all hover:scale-105 cursor-pointer"
             >
-              <Sparkles className={`w-5 h-5 ${generating ? 'animate-spin' : 'group-hover:animate-pulse'}`} />
-              {generating ? 'Generating Schedule...' : 'Auto Generate Roster'}
+              <Wand2 className="w-5 h-5 group-hover:scale-110 transition-transform cursor-pointer" />
+              Auto Generate Roster
             </Button>
           </div>
         </div>
       </header>
+
+      {/* Generation Full Screen Loader Overlay */}
+      {generating && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="p-4 bg-blue-500/10 rounded-full mb-6 relative">
+            <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
+            <RefreshCw className="w-12 h-12 text-blue-500 animate-spin relative z-10" />
+          </div>
+          <h2 className="text-3xl font-extrabold text-foreground mb-2 tracking-tight">Generating Schedule...</h2>
+          <p className="text-muted-foreground font-medium">Running constraint algorithms & balancing shifts</p>
+        </div>
+      )}
 
       <main className="max-w-[1600px] mx-auto px-4 sm:px-6">
         
@@ -313,6 +330,29 @@ function App() {
           </div>
         </div>
       </main>
+
+      {/* Confirm Generate Modal */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="glass-panel border-red-500/20 shadow-2xl sm:max-w-md bg-zinc-950/95 text-foreground">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold tracking-tight text-red-400 flex items-center gap-2">
+              <AlertCircle className="w-6 h-6" />
+              Confirm Generation
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground">
+              Are you sure you want to run the auto-generator? This will overwrite all non-manual assignments for the month. 
+              <br/><br/>
+              <strong className="text-foreground">Manual overrides will be preserved.</strong>
+            </p>
+          </div>
+          <div className="flex gap-4 justify-end">
+            <Button variant="ghost" onClick={() => setShowConfirmDialog(false)} className="rounded-xl hover:bg-white/10">Cancel</Button>
+            <Button onClick={confirmGenerate} className="bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-lg shadow-red-600/20">Generate Roster</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Modal (Preserved exactly as is) */}
       <Dialog open={!!selectedCell} onOpenChange={(open) => !open && setSelectedCell(null)}>
