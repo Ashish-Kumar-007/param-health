@@ -23,21 +23,17 @@ function App() {
   const [year] = useState(2026);
   const [month] = useState(6);
   const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   
   const [selectedCell, setSelectedCell] = useState<any>(null);
   const [editDoctorId, setEditDoctorId] = useState<string>('');
 
   const loadData = async () => {
-    setLoading(true);
     try {
       const res = await getRoster(year, month);
       setData(res);
     } catch (e) {
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -101,7 +97,6 @@ function App() {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   // Metrics calculations
-  const totalDays = eachDayOfInterval({ start: monthStart, end: monthEnd }).length;
   // Estimate total required shifts (some days have 5, some have 4 if 2 doctors on leave, etc, but we'll use actual count)
   let totalShifts = 0;
   let unassignedShifts = 0;
