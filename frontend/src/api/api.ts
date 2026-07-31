@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/rosters';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = `${BASE_URL}/api/rosters`;
 
 export const getRoster = async (year: number, month: number) => {
   const res = await fetch(`${API_URL}/${year}/${month}`);
@@ -40,8 +41,7 @@ export const updateAssignment = async (
 
 export const checkHealth = async () => {
   try {
-    const baseUrl = API_URL.replace('/api/rosters', '');
-    const res = await fetch(`${baseUrl}/health`, { method: 'GET', cache: 'no-store' });
+    const res = await fetch(`${BASE_URL}/health`, { method: 'GET', cache: 'no-store' });
     if (!res.ok) return false;
     return true;
   } catch (e) {
