@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getRoster, generateRoster, updateAssignment } from './api/api';
+import { getRoster, generateRoster, updateAssignment, checkHealth } from './api/api';
 import { eachDayOfInterval, endOfMonth, startOfMonth, startOfWeek, endOfWeek, format, isSameDay, parseISO, isSameMonth } from 'date-fns';
 import { RefreshCw, Stethoscope, Save, AlertCircle, Wand2, Activity, Users, CalendarDays, UserPlus } from 'lucide-react';
 
@@ -24,6 +24,7 @@ function App() {
   const [month] = useState(6);
   const [data, setData] = useState<any>(null);
   const [generating, setGenerating] = useState(false);
+  const [apiStatus, setApiStatus] = useState<'checking' | 'active' | 'error'>('checking');
   
   const [selectedCell, setSelectedCell] = useState<any>(null);
   const [editDoctorId, setEditDoctorId] = useState<string>('');
@@ -37,8 +38,18 @@ function App() {
     }
   };
 
+  const verifyHealth = async () => {
+    const isHealthy = await checkHealth();
+    setApiStatus(isHealthy ? 'active' : 'error');
+  };
+
   useEffect(() => {
     loadData();
+    verifyHealth();
+    
+    // Poll health status every 30 seconds
+    const interval = setInterval(verifyHealth, 30000);
+    return () => clearInterval(interval);
   }, [year, month]);
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -148,7 +159,29 @@ function App() {
           </div>
           
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-              <Button 
+            {/* Health Status Badge */}
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 border border-white/5 text-xs sm:text-sm font-semibold tracking-wide shadow-inner">
+              {apiStatus === 'checking' && (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                  <span className="text-muted-foreground">Checking API...</span>
+                </>
+              )}
+              {apiStatus === 'active' && (
+                <>
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                  <span className="text-emerald-400">API Active</span>
+                </>
+              )}
+              {apiStatus === 'error' && (
+                <>
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                  <span className="text-red-400">API Offline</span>
+                </>
+              )}
+            </div>
+
+            <Button 
               onClick={handleGenerateClick}
               disabled={generating}
               className="w-full sm:w-auto group flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-full font-semibold shadow-lg shadow-blue-500/25 transition-all hover:scale-105 cursor-pointer"

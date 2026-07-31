@@ -37,3 +37,14 @@ export const updateAssignment = async (
   if (!res.ok) throw new Error('Failed to update assignment');
   return res.json();
 };
+
+export const checkHealth = async () => {
+  try {
+    const baseUrl = API_URL.replace('/api/rosters', '');
+    const res = await fetch(`${baseUrl}/health`, { method: 'GET', cache: 'no-store' });
+    if (!res.ok) return false;
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
