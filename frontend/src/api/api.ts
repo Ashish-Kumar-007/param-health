@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3001/api/rosters';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/rosters';
 
 export const getRoster = async (year: number, month: number) => {
   const res = await fetch(`${API_URL}/${year}/${month}`);
